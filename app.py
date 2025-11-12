@@ -263,5 +263,28 @@ def upload_image():
     
     return redirect(url_for('index', error='Invalid file type. Only images allowed.'))
 
+@app.route('/delete_image/<filename>', methods=['POST'])
+def delete_image(filename):
+    validate_csrf_token()
+    
+    # Security: Ensure filename doesn't contain path traversal attempts
+    if '/' in filename or '\\' in filename or '..' in filename:
+        return redirect(url_for('index', error='Invalid filename'))
+    
+    # Verify file exists and is an allowed image type
+    if not allowed_file(filename):
+        return redirect(url_for('index', error='Invalid file type'))
+    
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    
+    if os.path.exists(filepath):
+        try:
+            os.remove(filepath)
+            return redirect(url_for('index', success='image_deleted'))
+        except Exception as e:
+            return redirect(url_for('index', error=f'Failed to delete image: {str(e)}'))
+    else:
+        return redirect(url_for('index', error='Image not found'))
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
