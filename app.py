@@ -59,13 +59,19 @@ def index():
 
 @app.route('/preview', methods=['POST'])
 def preview():
-    template_name = validate_template_name(request.form.get('template_name', 'template1'))
+    template_name = request.form.get('template_name', 'template1')
     header = request.form.get('header', '')
     body = request.form.get('body', '')
     button_text = request.form.get('button_text', '')
     button_link = request.form.get('button_link', '')
     footer = request.form.get('footer', '')
 
+    # If it's an imported template, return the raw HTML
+    if template_name == 'imported':
+        return body
+    
+    # Otherwise, use the standard templates
+    template_name = validate_template_name(template_name)
     return render_template(
         f'email_templates/{template_name}.html',
         header=header,
@@ -107,16 +113,20 @@ def save_template():
 @app.route('/export/<int:template_id>')
 def export_template(template_id):
     template = EmailTemplate.query.get_or_404(template_id)
-    validated_template_name = validate_template_name(template.template_name)
-
-    html_content = render_template(
-        f'email_templates/{validated_template_name}.html',
-        header=template.header,
-        body=template.body,
-        button_text=template.button_text,
-        button_link=template.button_link,
-        footer=template.footer
-    )
+    
+    # If it's an imported template, export the raw HTML
+    if template.template_name == 'imported':
+        html_content = template.body
+    else:
+        validated_template_name = validate_template_name(template.template_name)
+        html_content = render_template(
+            f'email_templates/{validated_template_name}.html',
+            header=template.header,
+            body=template.body,
+            button_text=template.button_text,
+            button_link=template.button_link,
+            footer=template.footer
+        )
 
     buffer = BytesIO()
     buffer.write(html_content.encode('utf-8'))
@@ -182,12 +192,12 @@ def import_html():
     template = EmailTemplate(
         title=title,
         subject=f"Imported: {title}",
-        header="Imported Template",
+        header="",
         body=html_content,
         button_text="",
         button_link="",
         footer="",
-        template_name="template1"
+        template_name="imported"  # Mark as imported HTML
     )
 
     db.session.add(template)

@@ -81,6 +81,7 @@
                                 <label for="template_name" class="form-label">Template Design</label>
                                 <select class="form-select" id="template_name" name="template_name" hx-post="/preview" hx-target="#live-preview" hx-trigger="change" hx-include="#emailForm">
                                     {% set selected_template = edit_template.template_name if edit_template else 'template1' %}
+                                    <option value="imported" {% if selected_template == 'imported' %}selected{% endif %}>Imported HTML Template</option>
                                     <option value="template1" {% if selected_template == 'template1' %}selected{% endif %}>Template 1 - Blue Professional</option>
                                     <option value="template2" {% if selected_template == 'template2' %}selected{% endif %}>Template 2 - Red Bold</option>
                                     <option value="template3" {% if selected_template == 'template3' %}selected{% endif %}>Template 3 - Green Fresh</option>
