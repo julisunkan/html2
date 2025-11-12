@@ -1,0 +1,246 @@
+🧠 PROMPT START
+
+You are an expert Python/Flask web developer.
+I want you to build a complete Flask web app called "MailCraft – HTML Email Creator" with the following requirements:
+
+🧱 1. App Overview
+
+Build a Flask web app that allows users to:
+
+Create, preview, and export responsive HTML email templates.
+
+Edit template fields via form inputs (not drag & drop).
+
+Save and manage templates in a SQLite database.
+
+View a live HTML preview as they type (using htmx).
+
+Import existing .html files into the builder.
+
+Export saved templates as .html files.
+
+Work offline as a Progressive Web App (PWA) with installable support.
+
+⚙️ 2. Tech Stack
+
+Backend: Flask + Jinja2 + SQLAlchemy + SQLite
+
+Frontend: Bootstrap 5 + htmx.js + custom CSS
+
+PWA: manifest.json, service-worker.js, and icons (192x192, 512x512, maskable versions).
+
+No authentication — all templates are globally accessible.
+
+📁 3. File & Folder Structure
+
+Create this structure inside Replit:
+
+html_email_creator/
+│
+├── app.py
+├── models.py
+│
+├── templates/
+│   ├── index.html
+│   ├── view_template.html
+│   ├── email_templates/
+│   │   ├── template1.html
+│   │   ├── template2.html
+│   │   ├── template3.html
+│   │   ├── template4.html
+│   │   ├── template5.html
+│   │   ├── template6.html
+│   │   ├── template7.html
+│   │   ├── template8.html
+│   │   ├── template9.html
+│   │   └── template10.html
+│
+├── static/
+│   ├── js/
+│   │   └── service-worker.js
+│   ├── icons/
+│   │   ├── icon-192.png
+│   │   ├── icon-512.png
+│   │   ├── maskable-192.png
+│   │   └── maskable-512.png
+│   ├── css/
+│   │   └── style.css
+│   └── manifest.json
+└── requirements.txt
+
+🧩 4. Functionality Requirements
+(A) Homepage (/)
+
+Form inputs for:
+
+Template title
+
+Subject line
+
+Header
+
+Body
+
+Button text & link
+
+Footer
+
+Dropdown to select one of 10 templates (template1–template10)
+
+Use htmx (hx-post="/preview", hx-target="#live-preview", hx-trigger="keyup change delay:500ms")
+→ This dynamically updates a <div id="live-preview"> with the rendered HTML.
+
+Include buttons:
+
+“💾 Save Template” → saves to DB
+
+“⬇️ Export HTML” → downloads rendered HTML
+
+“📤 Import HTML” → file upload to /import_html
+
+Show saved templates list (title + buttons for View, Edit, Export, Delete).
+
+(B) /preview
+
+Returns the rendered email HTML (for live preview).
+
+(C) /export/<id>
+
+Downloads the chosen template as an .html file.
+
+(D) /import_html
+
+Accepts uploaded .html file, saves it to DB as a new template.
+
+(E) /view/<id> and /edit/<id>
+
+/view/<id> shows full rendered email.
+
+/edit/<id> loads the form with existing values (for editing).
+
+💾 5. Database Model (SQLAlchemy)
+
+Model name: EmailTemplate
+Fields:
+
+id (int, primary key)
+
+title
+
+subject
+
+header
+
+body
+
+button_text
+
+button_link
+
+footer
+
+template_name
+
+created_at (DateTime)
+
+🎨 6. Templates (HTML Email Designs)
+
+Inside /templates/email_templates/, create 10 colorful responsive templates:
+
+Each should have a distinct color palette (e.g. blue, red, green, purple, orange, teal, etc.).
+
+Use <table> or <div> based email-safe layout.
+
+Include inline CSS compatible with most email clients.
+
+Each template uses:
+
+{{ header }}
+
+{{ body }}
+
+{{ button_text }}, {{ button_link }}
+
+{{ footer }}
+
+Example snippet:
+
+<body style="font-family:Arial;background:#f0f0f0;padding:20px;">
+  <div style="background:#ffffff;border-radius:8px;padding:20px;max-width:600px;margin:auto;">
+    <h2 style="color:#007BFF;">{{ header }}</h2>
+    <p>{{ body|safe }}</p>
+    {% if button_text %}
+      <p><a href="{{ button_link }}" style="background:#007BFF;color:white;padding:10px 20px;border-radius:5px;text-decoration:none;">{{ button_text }}</a></p>
+    {% endif %}
+    <hr>
+    <small style="color:#888;">{{ footer }}</small>
+  </div>
+</body>
+
+📦 7. PWA Configuration
+manifest.json
+{
+  "name": "MailCraft - HTML Email Creator",
+  "short_name": "MailCraft",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#007BFF",
+  "background_color": "#FFFFFF",
+  "icons": [
+    { "src": "/static/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/static/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/static/icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/static/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
+
+service-worker.js
+const CACHE_NAME = "mailcraft-cache-v1";
+const urlsToCache = ["/", "/static/manifest.json", "/static/icons/icon-192.png", "/static/icons/icon-512.png"];
+
+self.addEventListener("install", e => {
+  e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(urlsToCache)));
+});
+
+self.addEventListener("fetch", e => {
+  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+});
+
+Add in <head> of all templates:
+<link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+<meta name="theme-color" content="#007BFF">
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/static/js/service-worker.js');
+  }
+</script>
+
+🧰 8. requirements.txt
+flask
+flask_sqlalchemy
+
+🚀 9. Run Instructions
+
+Run pip install -r requirements.txt
+
+Run python app.py
+
+Visit https://[your-repl-username].repl.co
+
+Use “Add to Home Screen” to install as a PWA
+
+Create, preview, import, and export HTML emails offline or online.
+
+🌟 10. Bonus Enhancements (Optional)
+
+Add Markdown-to-HTML conversion using markdown2.
+
+Add Dark/Light theme toggle for the editor UI.
+
+Auto-minify exported HTML (htmlmin).
+
+Add Undo/Redo for form editing.
+
+🧩 Deliverables
+
+Please generate all code files required for the complete working project, ready to run in Replit, following this structure and features list.
