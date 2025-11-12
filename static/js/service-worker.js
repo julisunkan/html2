@@ -1,4 +1,6 @@
 const CACHE_NAME = "mailcraft-cache-v1";
+const CACHE_NAME = 'mailcraft-cache-v1';
+
 const urlsToCache = [
   "/",
   "/static/manifest.json",

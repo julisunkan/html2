@@ -5,6 +5,7 @@ import os
 from io import BytesIO
 import secrets
 import bleach
+from bleach.css_sanitizer import CSSSanitizer
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mailcraft.db'
@@ -60,13 +61,20 @@ def sanitize_html(content):
         'th': ['colspan', 'rowspan', 'style']
     }
     
-    # Sanitize the content
-    # Note: bleach doesn't support 'styles' parameter in newer versions
-    # We allow style attributes but rely on CSP and email client filtering
+    # Define allowed CSS properties
+    css_sanitizer = CSSSanitizer(allowed_css_properties=[
+        'color', 'background-color', 'font-size', 'font-weight', 'font-style',
+        'text-align', 'text-decoration', 'margin', 'padding', 'border',
+        'width', 'height', 'max-width', 'max-height', 'display',
+        'float', 'clear', 'line-height', 'letter-spacing', 'border-radius'
+    ])
+    
+    # Sanitize the content with CSS sanitizer
     clean_content = bleach.clean(
         content,
         tags=allowed_tags,
         attributes=allowed_attributes,
+        css_sanitizer=css_sanitizer,
         strip=True
     )
     
@@ -165,21 +173,25 @@ def save_template():
     footer = sanitize_html(request.form.get('footer'))
     template_name = validate_template_name(request.form.get('template_name'))
 
-    template = EmailTemplate(
-        title=title,
-        subject=subject,
-        header=header,
-        body=body,
-        button_text=button_text,
-        button_link=button_link,
-        footer=footer,
-        template_name=template_name
-    )
+    try:
+        template = EmailTemplate(
+            title=title,
+            subject=subject,
+            header=header,
+            body=body,
+            button_text=button_text,
+            button_link=button_link,
+            footer=footer,
+            template_name=template_name
+        )
 
-    db.session.add(template)
-    db.session.commit()
+        db.session.add(template)
+        db.session.commit()
 
-    return redirect(url_for('index', success='saved'))
+        return redirect(url_for('index', success='saved'))
+    except Exception as e:
+        db.session.rollback()
+        return redirect(url_for('index', error=f'Failed to save template: {str(e)}'))
 
 @app.route('/export/<int:template_id>')
 def export_template(template_id):
@@ -272,27 +284,35 @@ def update_template(template_id):
 
     template = EmailTemplate.query.get_or_404(template_id)
 
-    template.title = request.form.get('title')
-    template.subject = request.form.get('subject')
-    template.header = sanitize_html(request.form.get('header'))
-    template.body = sanitize_html(request.form.get('body'))
-    template.button_text = sanitize_html(request.form.get('button_text'))
-    template.button_link = sanitize_url(request.form.get('button_link'))
-    template.footer = sanitize_html(request.form.get('footer'))
-    template.template_name = validate_template_name(request.form.get('template_name'))
+    try:
+        template.title = request.form.get('title')
+        template.subject = request.form.get('subject')
+        template.header = sanitize_html(request.form.get('header'))
+        template.body = sanitize_html(request.form.get('body'))
+        template.button_text = sanitize_html(request.form.get('button_text'))
+        template.button_link = sanitize_url(request.form.get('button_link'))
+        template.footer = sanitize_html(request.form.get('footer'))
+        template.template_name = validate_template_name(request.form.get('template_name'))
 
-    db.session.commit()
+        db.session.commit()
 
-    return redirect(url_for('index', success='updated'))
+        return redirect(url_for('index', success='updated'))
+    except Exception as e:
+        db.session.rollback()
+        return redirect(url_for('index', error=f'Failed to update template: {str(e)}'))
 
 @app.route('/delete/<int:template_id>', methods=['POST'])
 def delete_template(template_id):
     validate_csrf_token()
 
-    template = EmailTemplate.query.get_or_404(template_id)
-    db.session.delete(template)
-    db.session.commit()
-    return redirect(url_for('index', success='deleted'))
+    try:
+        template = EmailTemplate.query.get_or_404(template_id)
+        db.session.delete(template)
+        db.session.commit()
+        return redirect(url_for('index', success='deleted'))
+    except Exception as e:
+        db.session.rollback()
+        return redirect(url_for('index', error=f'Failed to delete template: {str(e)}'))
 
 @app.route('/upload_image', methods=['POST'])
 def upload_image():
@@ -307,11 +327,14 @@ def upload_image():
         return redirect(url_for('index', error='No image selected'))
     
     if file and allowed_file(file.filename):
-        filename = secrets.token_hex(8) + '_' + file.filename
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-        image_url = url_for('static', filename=f'uploads/{filename}', _external=True)
-        return redirect(url_for('index', success='image_uploaded', image_url=image_url, filename=filename))
+        try:
+            filename = secrets.token_hex(8) + '_' + file.filename
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+            image_url = url_for('static', filename=f'uploads/{filename}', _external=True)
+            return redirect(url_for('index', success='image_uploaded', image_url=image_url, filename=filename))
+        except Exception as e:
+            return redirect(url_for('index', error=f'Failed to upload image: {str(e)}'))
     
     return redirect(url_for('index', error='Invalid file type. Only images allowed.'))
 
