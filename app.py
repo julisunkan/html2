@@ -17,7 +17,8 @@ db.init_app(app)
 
 ALLOWED_TEMPLATES = [
     'template1', 'template2', 'template3', 'template4', 'template5',
-    'template6', 'template7', 'template8', 'template9', 'template10'
+    'template6', 'template7', 'template8', 'template9', 'template10',
+    'imported'  # Keep for backward compatibility with existing data
 ]
 
 def validate_template_name(template_name):
@@ -66,11 +67,6 @@ def preview():
     button_link = request.form.get('button_link', '')
     footer = request.form.get('footer', '')
 
-    # If it's an imported template, return the raw HTML
-    if template_name == 'imported':
-        return body
-    
-    # Otherwise, use the standard templates
     template_name = validate_template_name(template_name)
     return render_template(
         f'email_templates/{template_name}.html',
@@ -114,11 +110,12 @@ def save_template():
 def export_template(template_id):
     template = EmailTemplate.query.get_or_404(template_id)
     
-    # If it's an imported template, export the raw HTML
-    if template.template_name == 'imported':
+    validated_template_name = validate_template_name(template.template_name)
+    
+    # Handle legacy imported templates by exporting raw HTML body
+    if validated_template_name == 'imported':
         html_content = template.body
     else:
-        validated_template_name = validate_template_name(template.template_name)
         html_content = render_template(
             f'email_templates/{validated_template_name}.html',
             header=template.header,
@@ -174,36 +171,6 @@ def export_current():
         download_name=filename,
         mimetype='text/html'
     )
-
-@app.route('/import_html', methods=['POST'])
-def import_html():
-    validate_csrf_token()
-
-    if 'html_file' not in request.files:
-        return redirect(url_for('index'))
-
-    file = request.files['html_file']
-    if file.filename == '':
-        return redirect(url_for('index'))
-
-    html_content = file.read().decode('utf-8')
-    title = request.form.get('import_title', file.filename.replace('.html', ''))
-
-    template = EmailTemplate(
-        title=title,
-        subject=f"Imported: {title}",
-        header="",
-        body=html_content,
-        button_text="",
-        button_link="",
-        footer="",
-        template_name="imported"  # Mark as imported HTML
-    )
-
-    db.session.add(template)
-    db.session.commit()
-
-    return redirect(url_for('index', success='imported'))
 
 @app.route('/view/<int:template_id>')
 def view_template(template_id):

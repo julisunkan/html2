@@ -81,7 +81,6 @@
                                 <label for="template_name" class="form-label">Template Design</label>
                                 <select class="form-select" id="template_name" name="template_name" hx-post="/preview" hx-target="#live-preview" hx-trigger="change" hx-include="#emailForm">
                                     {% set selected_template = edit_template.template_name if edit_template else 'template1' %}
-                                    <option value="imported" {% if selected_template == 'imported' %}selected{% endif %}>Imported HTML Template</option>
                                     <option value="template1" {% if selected_template == 'template1' %}selected{% endif %}>Template 1 - Blue Professional</option>
                                     <option value="template2" {% if selected_template == 'template2' %}selected{% endif %}>Template 2 - Red Bold</option>
                                     <option value="template3" {% if selected_template == 'template3' %}selected{% endif %}>Template 3 - Green Fresh</option>
@@ -211,24 +210,6 @@
                             </div>
                         </div>
 
-                        <div class="card">
-                            <div class="card-header">
-                                <h6 class="mb-0">📤 Import HTML File</h6>
-                            </div>
-                            <div class="card-body">
-                                <form method="POST" action="{{ url_for('import_html') }}" enctype="multipart/form-data">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <div class="mb-3">
-                                        <label for="import_title" class="form-label">Template Title</label>
-                                        <input type="text" class="form-control" id="import_title" name="import_title" placeholder="My Imported Template">
-                                    </div>
-                                    <div class="mb-3">
-                                        <input type="file" class="form-control" name="html_file" accept=".html" required>
-                                    </div>
-                                    <button type="submit" class="btn btn-outline-primary w-100">Import HTML</button>
-                                </form>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -481,8 +462,6 @@
                 showNotification('Template updated successfully!', 'success');
             } else if (urlParams.get('success') === 'deleted') {
                 showNotification('Template deleted successfully!', 'success');
-            } else if (urlParams.get('success') === 'imported') {
-                showNotification('Template imported successfully!', 'success');
             } else if (urlParams.get('success') === 'image_uploaded') {
                 const imageUrl = urlParams.get('image_url');
                 const filename = urlParams.get('filename');
