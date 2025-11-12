@@ -4,6 +4,7 @@ from datetime import datetime
 import os
 from io import BytesIO
 import secrets
+import bleach
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mailcraft.db'
@@ -25,6 +26,87 @@ def validate_template_name(template_name):
     if template_name not in ALLOWED_TEMPLATES:
         abort(400, description="Invalid template name")
     return template_name
+
+def sanitize_html(content):
+    """
+    Sanitize HTML content to allow safe tags and attributes while blocking dangerous ones.
+    Allows emojis, basic formatting, links, and images.
+    """
+    if not content:
+        return content
+    
+    # Define allowed HTML tags
+    allowed_tags = [
+        'p', 'br', 'span', 'div', 
+        'strong', 'em', 'b', 'i', 'u', 's', 'small',
+        'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+        'a', 'img',
+        'ul', 'ol', 'li',
+        'table', 'thead', 'tbody', 'tr', 'td', 'th',
+        'blockquote', 'code', 'pre'
+    ]
+    
+    # Define allowed attributes for each tag
+    allowed_attributes = {
+        '*': ['style', 'class'],
+        'a': ['href', 'title', 'target'],
+        'img': ['src', 'alt', 'width', 'height', 'style'],
+        'span': ['style'],
+        'div': ['style'],
+        'p': ['style'],
+        'h1': ['style'], 'h2': ['style'], 'h3': ['style'],
+        'h4': ['style'], 'h5': ['style'], 'h6': ['style'],
+        'td': ['colspan', 'rowspan', 'style'],
+        'th': ['colspan', 'rowspan', 'style']
+    }
+    
+    # Define allowed CSS properties in style attribute
+    allowed_styles = [
+        'color', 'background-color', 'font-size', 'font-weight', 'font-style',
+        'text-align', 'text-decoration', 'margin', 'padding', 'border',
+        'width', 'height', 'max-width', 'max-height', 'display',
+        'float', 'clear', 'line-height', 'letter-spacing'
+    ]
+    
+    # Sanitize the content
+    clean_content = bleach.clean(
+        content,
+        tags=allowed_tags,
+        attributes=allowed_attributes,
+        styles=allowed_styles,
+        strip=True
+    )
+    
+    return clean_content
+
+def sanitize_url(url):
+    """
+    Sanitize URL to only allow safe protocols (http, https, mailto, #).
+    Blocks javascript: and other dangerous protocols.
+    """
+    if not url:
+        return ''
+    
+    url = url.strip()
+    
+    # Allow empty anchor links and relative URLs
+    if url.startswith('#') or url.startswith('/'):
+        return url
+    
+    # Check for allowed protocols
+    allowed_protocols = ['http://', 'https://', 'mailto:']
+    url_lower = url.lower()
+    
+    for protocol in allowed_protocols:
+        if url_lower.startswith(protocol):
+            return url
+    
+    # If no protocol, assume it's a relative URL or anchor
+    if '://' not in url:
+        return url
+    
+    # Block any other protocol (javascript:, data:, etc.)
+    return '#'
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -61,11 +143,11 @@ def index():
 @app.route('/preview', methods=['POST'])
 def preview():
     template_name = request.form.get('template_name', 'template1')
-    header = request.form.get('header', '')
-    body = request.form.get('body', '')
-    button_text = request.form.get('button_text', '')
-    button_link = request.form.get('button_link', '')
-    footer = request.form.get('footer', '')
+    header = sanitize_html(request.form.get('header', ''))
+    body = sanitize_html(request.form.get('body', ''))
+    button_text = sanitize_html(request.form.get('button_text', ''))
+    button_link = sanitize_url(request.form.get('button_link', ''))
+    footer = sanitize_html(request.form.get('footer', ''))
 
     template_name = validate_template_name(template_name)
     return render_template(
@@ -83,11 +165,11 @@ def save_template():
 
     title = request.form.get('title')
     subject = request.form.get('subject')
-    header = request.form.get('header')
-    body = request.form.get('body')
-    button_text = request.form.get('button_text')
-    button_link = request.form.get('button_link')
-    footer = request.form.get('footer')
+    header = sanitize_html(request.form.get('header'))
+    body = sanitize_html(request.form.get('body'))
+    button_text = sanitize_html(request.form.get('button_text'))
+    button_link = sanitize_url(request.form.get('button_link'))
+    footer = sanitize_html(request.form.get('footer'))
     template_name = validate_template_name(request.form.get('template_name'))
 
     template = EmailTemplate(
@@ -144,11 +226,11 @@ def export_current():
 
     template_name = validate_template_name(request.form.get('template_name', 'template1'))
     title = request.form.get('title', 'email_template')
-    header = request.form.get('header', '')
-    body = request.form.get('body', '')
-    button_text = request.form.get('button_text', '')
-    button_link = request.form.get('button_link', '')
-    footer = request.form.get('footer', '')
+    header = sanitize_html(request.form.get('header', ''))
+    body = sanitize_html(request.form.get('body', ''))
+    button_text = sanitize_html(request.form.get('button_text', ''))
+    button_link = sanitize_url(request.form.get('button_link', ''))
+    footer = sanitize_html(request.form.get('footer', ''))
 
     html_content = render_template(
         f'email_templates/{template_name}.html',
@@ -199,11 +281,11 @@ def update_template(template_id):
 
     template.title = request.form.get('title')
     template.subject = request.form.get('subject')
-    template.header = request.form.get('header')
-    template.body = request.form.get('body')
-    template.button_text = request.form.get('button_text')
-    template.button_link = request.form.get('button_link')
-    template.footer = request.form.get('footer')
+    template.header = sanitize_html(request.form.get('header'))
+    template.body = sanitize_html(request.form.get('body'))
+    template.button_text = sanitize_html(request.form.get('button_text'))
+    template.button_link = sanitize_url(request.form.get('button_link'))
+    template.footer = sanitize_html(request.form.get('footer'))
     template.template_name = validate_template_name(request.form.get('template_name'))
 
     db.session.commit()
