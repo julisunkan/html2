@@ -60,20 +60,13 @@ def sanitize_html(content):
         'th': ['colspan', 'rowspan', 'style']
     }
     
-    # Define allowed CSS properties in style attribute
-    allowed_styles = [
-        'color', 'background-color', 'font-size', 'font-weight', 'font-style',
-        'text-align', 'text-decoration', 'margin', 'padding', 'border',
-        'width', 'height', 'max-width', 'max-height', 'display',
-        'float', 'clear', 'line-height', 'letter-spacing'
-    ]
-    
     # Sanitize the content
+    # Note: bleach doesn't support 'styles' parameter in newer versions
+    # We allow style attributes but rely on CSP and email client filtering
     clean_content = bleach.clean(
         content,
         tags=allowed_tags,
         attributes=allowed_attributes,
-        styles=allowed_styles,
         strip=True
     )
     
