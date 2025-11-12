@@ -118,6 +118,33 @@
                                     <button type="submit" class="btn btn-outline-primary w-100">Upload Image</button>
                                 </form>
                                 <div id="uploaded-images" class="mt-3"></div>
+                                
+                                {% if uploaded_images %}
+                                <div class="mt-3">
+                                    <h6 class="text-muted mb-2">📁 Your Uploaded Images</h6>
+                                    <div class="uploaded-images-list">
+                                        {% for image in uploaded_images %}
+                                        <div class="image-item card mb-2">
+                                            <div class="card-body p-2">
+                                                <div class="row align-items-center">
+                                                    <div class="col-3">
+                                                        <img src="{{ url_for('static', filename='uploads/' + image) }}" alt="{{ image }}" class="img-thumbnail" style="max-height: 60px; width: auto;">
+                                                    </div>
+                                                    <div class="col-9">
+                                                        <small class="d-block text-muted mb-1">{{ image }}</small>
+                                                        <div class="input-group input-group-sm">
+                                                            <input type="text" class="form-control form-control-sm" value="{{ url_for('static', filename='uploads/' + image, _external=True) }}" readonly onclick="this.select(); copyToClipboard(this.value)">
+                                                            <button class="btn btn-outline-secondary btn-sm" type="button" onclick="copyToClipboard('{{ url_for('static', filename='uploads/' + image, _external=True) }}')">📋</button>
+                                                        </div>
+                                                        <small class="text-muted">Click URL to copy • Use in email body: &lt;img src="URL"&gt;</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
                             </div>
                         </div>
 
@@ -240,6 +267,14 @@
 
         function confirmDelete(templateId) {
             document.getElementById('delete-form-' + templateId).submit();
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification('URL copied to clipboard!', 'success', 2000);
+            }).catch(() => {
+                showNotification('Failed to copy URL', 'error', 2000);
+            });
         }
 
         function exportCurrentTemplate() {

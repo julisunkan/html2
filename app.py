@@ -48,7 +48,14 @@ with app.app_context():
 @app.route('/')
 def index():
     templates = EmailTemplate.query.order_by(EmailTemplate.created_at.desc()).all()
-    return render_template('index.html', saved_templates=templates)
+    
+    # Get list of uploaded images
+    uploaded_images = []
+    upload_folder = app.config['UPLOAD_FOLDER']
+    if os.path.exists(upload_folder):
+        uploaded_images = sorted([f for f in os.listdir(upload_folder) if allowed_file(f)], reverse=True)
+    
+    return render_template('index.html', saved_templates=templates, uploaded_images=uploaded_images)
 
 @app.route('/preview', methods=['POST'])
 def preview():
@@ -198,7 +205,14 @@ def view_template(template_id):
 def edit_template(template_id):
     template = EmailTemplate.query.get_or_404(template_id)
     all_templates = EmailTemplate.query.order_by(EmailTemplate.created_at.desc()).all()
-    return render_template('index.html', saved_templates=all_templates, edit_template=template)
+    
+    # Get list of uploaded images
+    uploaded_images = []
+    upload_folder = app.config['UPLOAD_FOLDER']
+    if os.path.exists(upload_folder):
+        uploaded_images = sorted([f for f in os.listdir(upload_folder) if allowed_file(f)], reverse=True)
+    
+    return render_template('index.html', saved_templates=all_templates, edit_template=template, uploaded_images=uploaded_images)
 
 @app.route('/update/<int:template_id>', methods=['POST'])
 def update_template(template_id):

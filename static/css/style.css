@@ -150,3 +150,27 @@ textarea.form-control {
     font-size: 0.875rem;
     cursor: pointer;
 }
+
+.uploaded-images-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.image-item {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+}
+
+.image-item img {
+    object-fit: cover;
+}
+
+.image-item input {
+    font-size: 0.75rem;
+    cursor: pointer;
+    user-select: all;
+}
+
+.image-item small {
+    font-size: 0.7rem;
+}
