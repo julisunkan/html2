@@ -165,13 +165,19 @@
                                 <h6 class="mb-0">🖼️ Upload Image</h6>
                             </div>
                             <div class="card-body">
-                                <form method="POST" action="{{ url_for('upload_image') }}" enctype="multipart/form-data">
+                                <form method="POST" action="{{ url_for('upload_image') }}" enctype="multipart/form-data" id="imageUploadForm">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <div class="mb-3">
-                                        <input type="file" class="form-control" name="image" accept="image/*" required>
+                                        <input type="file" class="form-control" name="image" accept="image/*" required id="imageFileInput">
                                         <small class="text-muted">Supported: PNG, JPG, JPEG, GIF, WebP (Max 16MB)</small>
                                     </div>
-                                    <button type="submit" class="btn btn-outline-primary w-100">Upload Image</button>
+                                    <div class="mb-3" id="uploadProgressContainer" style="display: none;">
+                                        <div class="progress" style="height: 25px;">
+                                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 0%;" id="uploadProgressBar">0%</div>
+                                        </div>
+                                        <small class="text-muted mt-1 d-block text-center">Uploading image...</small>
+                                    </div>
+                                    <button type="submit" class="btn btn-outline-primary w-100" id="uploadImageButton">Upload Image</button>
                                 </form>
                                 <div id="uploaded-images" class="mt-3"></div>
                                 
@@ -449,11 +455,74 @@
             }
         }
 
+        // Handle image upload with progress bar
+        function setupImageUploadProgress() {
+            const uploadForm = document.getElementById('imageUploadForm');
+            const progressContainer = document.getElementById('uploadProgressContainer');
+            const progressBar = document.getElementById('uploadProgressBar');
+            const uploadButton = document.getElementById('uploadImageButton');
+            const fileInput = document.getElementById('imageFileInput');
+            
+            if (uploadForm) {
+                uploadForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const formData = new FormData(this);
+                    
+                    // Show progress bar
+                    progressContainer.style.display = 'block';
+                    uploadButton.disabled = true;
+                    uploadButton.textContent = 'Uploading...';
+                    fileInput.disabled = true;
+                    
+                    // Simulate progress (since XMLHttpRequest upload progress doesn't work well with Flask redirects)
+                    let progress = 0;
+                    const progressInterval = setInterval(() => {
+                        progress += Math.random() * 15;
+                        if (progress > 90) {
+                            progress = 90;
+                            clearInterval(progressInterval);
+                        }
+                        progressBar.style.width = progress + '%';
+                        progressBar.textContent = Math.round(progress) + '%';
+                    }, 100);
+                    
+                    // Send the form data
+                    fetch(this.action, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => {
+                        clearInterval(progressInterval);
+                        progressBar.style.width = '100%';
+                        progressBar.textContent = '100%';
+                        
+                        setTimeout(() => {
+                            if (response.redirected) {
+                                window.location.href = response.url;
+                            } else {
+                                return response.text();
+                            }
+                        }, 300);
+                    })
+                    .catch(error => {
+                        clearInterval(progressInterval);
+                        progressContainer.style.display = 'none';
+                        uploadButton.disabled = false;
+                        uploadButton.textContent = 'Upload Image';
+                        fileInput.disabled = false;
+                        showNotification('Upload failed: ' + error.message, 'error');
+                    });
+                });
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('emailForm');
             htmx.trigger(form, 'keyup');
             
             setupDragAndDrop();
+            setupImageUploadProgress();
             
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('success') === 'saved') {
