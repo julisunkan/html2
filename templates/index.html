@@ -85,7 +85,7 @@
                         </form>
 
                         <div class="d-grid gap-2 mt-2">
-                            <button type="button" class="btn btn-primary" onclick="document.getElementById('exportForm').submit()">⬇️ Export HTML</button>
+                            <button type="button" class="btn btn-primary" onclick="exportCurrentTemplate()">⬇️ Export HTML</button>
                         </div>
 
                         <form method="POST" action="{{ url_for('export_current') }}" id="exportForm" style="display: none;">
@@ -177,12 +177,13 @@
             navigator.serviceWorker.register('/static/js/service-worker.js');
         }
 
-        document.getElementById('emailForm').addEventListener('submit', function() {
+        function exportCurrentTemplate() {
             const fields = ['title', 'subject', 'template_name', 'header', 'body', 'button_text', 'button_link', 'footer'];
             fields.forEach(field => {
                 document.getElementById('export_' + field).value = document.getElementById(field).value;
             });
-        });
+            document.getElementById('exportForm').submit();
+        }
 
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('emailForm');
