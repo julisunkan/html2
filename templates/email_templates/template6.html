@@ -11,7 +11,7 @@
                 <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:15px;overflow:hidden;box-shadow:0 5px 25px rgba(0,150,136,0.15);">
                     <tr>
                         <td style="background:linear-gradient(135deg, #00897B 0%, #004D40 100%);padding:45px 30px;text-align:left;">
-                            <h1 style="margin:0;color:#ffffff;font-size:32px;font-weight:300;">{{ header }}</h1>
+                            <h1 style="margin:0;color:#ffffff;font-size:32px;font-weight:300;">{{ header|safe }}</h1>
                         </td>
                     </tr>
                     <tr>
@@ -32,7 +32,7 @@
                     </tr>
                     <tr>
                         <td style="background-color:#B2DFDB;padding:20px 30px;text-align:center;">
-                            <p style="margin:0;color:#004D40;font-size:13px;">{{ footer }}</p>
+                            <p style="margin:0;color:#004D40;font-size:13px;">{{ footer|safe }}</p>
                         </td>
                     </tr>
                 </table>

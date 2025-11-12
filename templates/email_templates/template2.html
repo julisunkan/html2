@@ -11,7 +11,7 @@
                 <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border:3px solid #dc3545;">
                     <tr>
                         <td style="background-color:#dc3545;padding:25px;text-align:center;">
-                            <h1 style="margin:0;color:#ffffff;font-size:32px;font-weight:bold;text-transform:uppercase;letter-spacing:2px;">{{ header }}</h1>
+                            <h1 style="margin:0;color:#ffffff;font-size:32px;font-weight:bold;text-transform:uppercase;letter-spacing:2px;">{{ header|safe }}</h1>
                         </td>
                     </tr>
                     <tr>
@@ -32,7 +32,7 @@
                     </tr>
                     <tr>
                         <td style="background-color:#dc3545;padding:15px 30px;text-align:center;">
-                            <p style="margin:0;color:#ffffff;font-size:13px;">{{ footer }}</p>
+                            <p style="margin:0;color:#ffffff;font-size:13px;">{{ footer|safe }}</p>
                         </td>
                     </tr>
                 </table>
