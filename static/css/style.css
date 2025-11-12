@@ -1,0 +1,121 @@
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.navbar-brand {
+    font-weight: 600;
+    font-size: 1.5rem;
+}
+
+.card {
+    border: none;
+    margin-bottom: 20px;
+}
+
+.card-header {
+    font-weight: 600;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.125);
+}
+
+.form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.form-control, .form-select {
+    border-radius: 6px;
+    border: 1.5px solid #ced4da;
+    padding: 0.6rem 0.75rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #007BFF;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.btn {
+    border-radius: 6px;
+    padding: 0.6rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-lg {
+    padding: 0.8rem 2rem;
+    font-size: 1.1rem;
+}
+
+#live-preview {
+    min-height: 400px;
+    max-height: 800px;
+    overflow-y: auto;
+    transition: all 0.3s ease;
+}
+
+#live-preview:empty::before {
+    content: 'Start typing to see your email preview...';
+    color: #6c757d;
+    text-align: center;
+    display: block;
+    padding: 40px;
+    font-size: 1.1rem;
+}
+
+.list-group-item {
+    border-left: 4px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.list-group-item:hover {
+    border-left-color: #007BFF;
+    background-color: #f8f9fa;
+}
+
+.sticky-top {
+    position: sticky;
+}
+
+.shadow-sm {
+    box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.075) !important;
+}
+
+.btn-group-sm .btn {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+@media (max-width: 991px) {
+    .sticky-top {
+        position: relative;
+        top: 0 !important;
+    }
+    
+    .col-lg-5, .col-lg-7 {
+        margin-bottom: 20px;
+    }
+}
+
+.htmx-indicator {
+    display: none;
+}
+
+.htmx-request .htmx-indicator {
+    display: inline-block;
+}
+
+.htmx-request #live-preview {
+    opacity: 0.7;
+}

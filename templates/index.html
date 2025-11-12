@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MailCraft - HTML Email Creator</title>
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="theme-color" content="#007BFF">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">✉️ MailCraft - HTML Email Creator</span>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-lg-5">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">{% if edit_template %}Edit Template{% else %}Create New Template{% endif %}</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{% if edit_template %}{{ url_for('update_template', template_id=edit_template.id) }}{% else %}{{ url_for('save_template') }}{% endif %}" id="emailForm">
+                            <div class="mb-3">
+                                <label for="title" class="form-label">Template Title</label>
+                                <input type="text" class="form-control" id="title" name="title" value="{% if edit_template %}{{ edit_template.title }}{% endif %}" required hx-post="/preview" hx-target="#live-preview" hx-trigger="keyup changed delay:500ms" hx-include="#emailForm">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="subject" class="form-label">Email Subject</label>
+                                <input type="text" class="form-control" id="subject" name="subject" value="{% if edit_template %}{{ edit_template.subject }}{% endif %}" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="template_name" class="form-label">Template Design</label>
+                                <select class="form-select" id="template_name" name="template_name" hx-post="/preview" hx-target="#live-preview" hx-trigger="change" hx-include="#emailForm">
+                                    {% set selected_template = edit_template.template_name if edit_template else 'template1' %}
+                                    <option value="template1" {% if selected_template == 'template1' %}selected{% endif %}>Template 1 - Blue Professional</option>
+                                    <option value="template2" {% if selected_template == 'template2' %}selected{% endif %}>Template 2 - Red Bold</option>
+                                    <option value="template3" {% if selected_template == 'template3' %}selected{% endif %}>Template 3 - Green Fresh</option>
+                                    <option value="template4" {% if selected_template == 'template4' %}selected{% endif %}>Template 4 - Purple Elegant</option>
+                                    <option value="template5" {% if selected_template == 'template5' %}selected{% endif %}>Template 5 - Orange Vibrant</option>
+                                    <option value="template6" {% if selected_template == 'template6' %}selected{% endif %}>Template 6 - Teal Modern</option>
+                                    <option value="template7" {% if selected_template == 'template7' %}selected{% endif %}>Template 7 - Pink Cheerful</option>
+                                    <option value="template8" {% if selected_template == 'template8' %}selected{% endif %}>Template 8 - Indigo Corporate</option>
+                                    <option value="template9" {% if selected_template == 'template9' %}selected{% endif %}>Template 9 - Amber Warm</option>
+                                    <option value="template10" {% if selected_template == 'template10' %}selected{% endif %}>Template 10 - Cyan Cool</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="header" class="form-label">Header Text</label>
+                                <input type="text" class="form-control" id="header" name="header" value="{% if edit_template %}{{ edit_template.header }}{% endif %}" required hx-post="/preview" hx-target="#live-preview" hx-trigger="keyup changed delay:500ms" hx-include="#emailForm">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="body" class="form-label">Body Content</label>
+                                <textarea class="form-control" id="body" name="body" rows="5" required hx-post="/preview" hx-target="#live-preview" hx-trigger="keyup changed delay:500ms" hx-include="#emailForm">{% if edit_template %}{{ edit_template.body }}{% endif %}</textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="button_text" class="form-label">Button Text (Optional)</label>
+                                <input type="text" class="form-control" id="button_text" name="button_text" value="{% if edit_template %}{{ edit_template.button_text }}{% endif %}" hx-post="/preview" hx-target="#live-preview" hx-trigger="keyup changed delay:500ms" hx-include="#emailForm">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="button_link" class="form-label">Button Link (Optional)</label>
+                                <input type="url" class="form-control" id="button_link" name="button_link" value="{% if edit_template %}{{ edit_template.button_link }}{% endif %}" placeholder="https://example.com" hx-post="/preview" hx-target="#live-preview" hx-trigger="keyup changed delay:500ms" hx-include="#emailForm">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="footer" class="form-label">Footer Text</label>
+                                <input type="text" class="form-control" id="footer" name="footer" value="{% if edit_template %}{{ edit_template.footer }}{% endif %}" hx-post="/preview" hx-target="#live-preview" hx-trigger="keyup changed delay:500ms" hx-include="#emailForm">
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-success btn-lg">💾 {% if edit_template %}Update{% else %}Save{% endif %} Template</button>
+                            </div>
+                        </form>
+
+                        <div class="d-grid gap-2 mt-2">
+                            <button type="button" class="btn btn-primary" onclick="document.getElementById('exportForm').submit()">⬇️ Export HTML</button>
+                        </div>
+
+                        <form method="POST" action="{{ url_for('export_current') }}" id="exportForm" style="display: none;">
+                            <input type="hidden" name="title" id="export_title">
+                            <input type="hidden" name="subject" id="export_subject">
+                            <input type="hidden" name="template_name" id="export_template_name">
+                            <input type="hidden" name="header" id="export_header">
+                            <input type="hidden" name="body" id="export_body">
+                            <input type="hidden" name="button_text" id="export_button_text">
+                            <input type="hidden" name="button_link" id="export_button_link">
+                            <input type="hidden" name="footer" id="export_footer">
+                        </form>
+
+                        <hr>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">📤 Import HTML File</h6>
+                            </div>
+                            <div class="card-body">
+                                <form method="POST" action="{{ url_for('import_html') }}" enctype="multipart/form-data">
+                                    <div class="mb-3">
+                                        <label for="import_title" class="form-label">Template Title</label>
+                                        <input type="text" class="form-control" id="import_title" name="import_title" placeholder="My Imported Template">
+                                    </div>
+                                    <div class="mb-3">
+                                        <input type="file" class="form-control" name="html_file" accept=".html" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-outline-primary w-100">Import HTML</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm mt-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0">📋 Saved Templates</h5>
+                    </div>
+                    <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                        {% if saved_templates %}
+                            <div class="list-group">
+                                {% for template in saved_templates %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ template.title }}</h6>
+                                            <small class="text-muted">{{ template.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                        </div>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('view_template', template_id=template.id) }}" class="btn btn-outline-primary" target="_blank">View</a>
+                                            <a href="{{ url_for('edit_template', template_id=template.id) }}" class="btn btn-outline-secondary">Edit</a>
+                                            <a href="{{ url_for('export_template', template_id=template.id) }}" class="btn btn-outline-success">Export</a>
+                                            <form method="POST" action="{{ url_for('delete_template', template_id=template.id) }}" style="display: inline;">
+                                                <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Delete this template?')">Delete</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted text-center">No templates saved yet. Create your first template!</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="card shadow-sm sticky-top" style="top: 20px;">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">👁️ Live Preview</h5>
+                    </div>
+                    <div class="card-body" style="background: #f5f5f5; min-height: 600px; overflow-y: auto;">
+                        <div id="live-preview" style="background: white; border-radius: 8px; padding: 20px;">
+                            <p class="text-center text-muted">Start typing to see your email preview...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/js/service-worker.js');
+        }
+
+        document.getElementById('emailForm').addEventListener('submit', function() {
+            const fields = ['title', 'subject', 'template_name', 'header', 'body', 'button_text', 'button_link', 'footer'];
+            fields.forEach(field => {
+                document.getElementById('export_' + field).value = document.getElementById(field).value;
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('emailForm');
+            htmx.trigger(form, 'keyup');
+        });
+    </script>
+</body>
+</html>

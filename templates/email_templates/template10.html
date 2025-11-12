@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;font-family:'Verdana',Geneva,sans-serif;background-color:#e0f7fa;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#e0f7fa;padding:20px 0;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 6px 30px rgba(0,188,212,0.2);">
+                    <tr>
+                        <td style="background:linear-gradient(135deg, #00BCD4 0%, #0097A7 50%, #006064 100%);padding:40px 30px;text-align:center;">
+                            <h1 style="margin:0;color:#ffffff;font-size:36px;font-weight:bold;text-shadow:2px 2px 8px rgba(0,0,0,0.3);">{{ header }}</h1>
+                            <div style="width:100px;height:3px;background-color:#ffffff;margin:15px auto;opacity:0.7;"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:40px 35px;">
+                            <div style="color:#263238;font-size:16px;line-height:1.8;">
+                                {{ body|safe }}
+                            </div>
+                            {% if button_text %}
+                            <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:32px;">
+                                <tr>
+                                    <td align="center">
+                                        <a href="{{ button_link }}" style="display:inline-block;padding:15px 42px;background:linear-gradient(90deg, #00BCD4 0%, #0097A7 100%);color:#ffffff;text-decoration:none;border-radius:6px;font-weight:600;font-size:16px;box-shadow:0 4px 15px rgba(0,188,212,0.4);">{{ button_text }}</a>
+                                    </td>
+                                </tr>
+                            </table>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="background-color:#B2EBF2;padding:22px 30px;text-align:center;border-top:2px solid #00BCD4;">
+                            <p style="margin:0;color:#00838F;font-size:14px;">{{ footer }}</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
