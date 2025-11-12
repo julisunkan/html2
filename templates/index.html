@@ -484,9 +484,23 @@
                 showNotification('Template imported successfully!', 'success');
             } else if (urlParams.get('success') === 'image_uploaded') {
                 const imageUrl = urlParams.get('image_url');
-                showNotification('Image uploaded successfully! URL copied to clipboard. Image now visible in Live Preview.', 'success');
+                const filename = urlParams.get('filename');
+                showNotification('Image uploaded and inserted into body! Image now visible in Live Preview.', 'success');
                 if (imageUrl) {
                     navigator.clipboard.writeText(imageUrl).catch(() => {});
+                    
+                    // Auto-insert image into body
+                    const bodyTextarea = document.getElementById('body');
+                    const imgTag = `<img src="${imageUrl}" alt="${filename}" style="display: block; margin: 20px auto; max-width: 100%; height: auto; width: 500px;">`;
+                    
+                    if (bodyTextarea.value.trim() === '') {
+                        bodyTextarea.value = imgTag;
+                    } else {
+                        bodyTextarea.value = bodyTextarea.value + '\n\n' + imgTag;
+                    }
+                    
+                    // Trigger preview update
+                    htmx.trigger(bodyTextarea, 'keyup');
                 }
             } else if (urlParams.get('success') === 'image_deleted') {
                 showNotification('Image deleted successfully!', 'success');

@@ -259,7 +259,7 @@ def upload_image():
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
         image_url = url_for('static', filename=f'uploads/{filename}', _external=True)
-        return redirect(url_for('index', success='image_uploaded', image_url=image_url))
+        return redirect(url_for('index', success='image_uploaded', image_url=image_url, filename=filename))
     
     return redirect(url_for('index', error='Invalid file type. Only images allowed.'))
 
