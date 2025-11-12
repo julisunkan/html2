@@ -26,6 +26,7 @@
                     </div>
                     <div class="card-body">
                         <form method="POST" action="{% if edit_template %}{{ url_for('update_template', template_id=edit_template.id) }}{% else %}{{ url_for('save_template') }}{% endif %}" id="emailForm">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <div class="mb-3">
                                 <label for="title" class="form-label">Template Title</label>
                                 <input type="text" class="form-control" id="title" name="title" value="{% if edit_template %}{{ edit_template.title }}{% endif %}" required hx-post="/preview" hx-target="#live-preview" hx-trigger="keyup changed delay:500ms" hx-include="#emailForm">
@@ -88,6 +89,7 @@
                         </div>
 
                         <form method="POST" action="{{ url_for('export_current') }}" id="exportForm" style="display: none;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="hidden" name="title" id="export_title">
                             <input type="hidden" name="subject" id="export_subject">
                             <input type="hidden" name="template_name" id="export_template_name">
@@ -106,6 +108,7 @@
                             </div>
                             <div class="card-body">
                                 <form method="POST" action="{{ url_for('import_html') }}" enctype="multipart/form-data">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <div class="mb-3">
                                         <label for="import_title" class="form-label">Template Title</label>
                                         <input type="text" class="form-control" id="import_title" name="import_title" placeholder="My Imported Template">
@@ -139,6 +142,7 @@
                                             <a href="{{ url_for('edit_template', template_id=template.id) }}" class="btn btn-outline-secondary">Edit</a>
                                             <a href="{{ url_for('export_template', template_id=template.id) }}" class="btn btn-outline-success">Export</a>
                                             <form method="POST" action="{{ url_for('delete_template', template_id=template.id) }}" style="display: inline;">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                 <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Delete this template?')">Delete</button>
                                             </form>
                                         </div>
