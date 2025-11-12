@@ -28,6 +28,11 @@
                         {% if template.template_name == 'imported' %}
                             {{ template.body|safe }}
                         {% else %}
+                            {% set header = template.header %}
+                            {% set body = template.body %}
+                            {% set button_text = template.button_text %}
+                            {% set button_link = template.button_link %}
+                            {% set footer = template.footer %}
                             {% include 'email_templates/' + template.template_name + '.html' %}
                         {% endif %}
                     </div>
