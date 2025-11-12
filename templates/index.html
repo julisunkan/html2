@@ -209,6 +209,23 @@
                         <h5 class="mb-0">👁️ Live Preview</h5>
                     </div>
                     <div class="card-body" style="background: #f5f5f5; min-height: 600px; overflow-y: auto;">
+                        {% if uploaded_images %}
+                        <div id="uploaded-images-preview" style="background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px;">
+                            <h6 class="text-muted mb-3">📁 Your Uploaded Images</h6>
+                            <div class="row g-2">
+                                {% for image in uploaded_images %}
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <img src="{{ url_for('static', filename='uploads/' + image) }}" alt="{{ image }}" class="card-img-top" style="height: 150px; object-fit: cover;">
+                                        <div class="card-body p-2">
+                                            <small class="text-muted d-block" style="font-size: 0.7rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ image }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
                         <div id="live-preview" style="background: white; border-radius: 8px; padding: 20px;">
                             <p class="text-center text-muted">Start typing to see your email preview...</p>
                         </div>
@@ -301,15 +318,9 @@
                 showNotification('Template imported successfully!', 'success');
             } else if (urlParams.get('success') === 'image_uploaded') {
                 const imageUrl = urlParams.get('image_url');
-                showNotification('Image uploaded successfully! URL copied to clipboard.', 'success');
+                showNotification('Image uploaded successfully! URL copied to clipboard. Image now visible in Live Preview.', 'success');
                 if (imageUrl) {
                     navigator.clipboard.writeText(imageUrl).catch(() => {});
-                    const container = document.getElementById('uploaded-images');
-                    container.innerHTML = `<div class="alert alert-info mt-2">
-                        <strong>Image URL:</strong><br>
-                        <input type="text" class="form-control form-control-sm mt-1" value="${imageUrl}" readonly onclick="this.select()">
-                        <small class="text-muted">Click to select and copy</small>
-                    </div>`;
                 }
             } else if (urlParams.get('error')) {
                 showNotification(urlParams.get('error'), 'error');
