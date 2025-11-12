@@ -17,6 +17,8 @@
         </div>
     </nav>
 
+    <div id="notification-container" class="container-fluid mt-3"></div>
+
     <div class="container-fluid mt-4">
         <div class="row">
             <div class="col-lg-5">
@@ -141,9 +143,9 @@
                                             <a href="{{ url_for('view_template', template_id=template.id) }}" class="btn btn-outline-primary" target="_blank">View</a>
                                             <a href="{{ url_for('edit_template', template_id=template.id) }}" class="btn btn-outline-secondary">Edit</a>
                                             <a href="{{ url_for('export_template', template_id=template.id) }}" class="btn btn-outline-success">Export</a>
-                                            <form method="POST" action="{{ url_for('delete_template', template_id=template.id) }}" style="display: inline;">
+                                            <button type="button" class="btn btn-outline-danger" onclick="showDeleteConfirmation({{ template.id }}, '{{ template.title }}')">Delete</button>
+                                            <form method="POST" action="{{ url_for('delete_template', template_id=template.id) }}" id="delete-form-{{ template.id }}" style="display: none;">
                                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                                <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Delete this template?')">Delete</button>
                                             </form>
                                         </div>
                                     </div>
@@ -177,17 +179,77 @@
             navigator.serviceWorker.register('/static/js/service-worker.js');
         }
 
+        function showNotification(message, type = 'info', duration = 4000) {
+            const container = document.getElementById('notification-container');
+            const notification = document.createElement('div');
+            
+            const alertClass = type === 'success' ? 'alert-success' : 
+                             type === 'error' ? 'alert-danger' : 
+                             type === 'warning' ? 'alert-warning' : 'alert-info';
+            
+            notification.className = `alert ${alertClass} alert-dismissible fade show`;
+            notification.innerHTML = `
+                <strong>${type === 'success' ? '✓' : type === 'error' ? '✗' : type === 'warning' ? '⚠' : 'ℹ'}</strong> ${message}
+                <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+            `;
+            
+            container.appendChild(notification);
+            
+            if (duration > 0) {
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                    setTimeout(() => notification.remove(), 150);
+                }, duration);
+            }
+        }
+
+        function showDeleteConfirmation(templateId, templateTitle) {
+            const container = document.getElementById('notification-container');
+            const confirmation = document.createElement('div');
+            
+            confirmation.className = 'alert alert-warning alert-dismissible fade show';
+            confirmation.innerHTML = `
+                <strong>⚠ Confirm Deletion</strong><br>
+                Are you sure you want to delete "${templateTitle}"?
+                <div class="mt-2">
+                    <button type="button" class="btn btn-sm btn-danger me-2" onclick="confirmDelete(${templateId})">Yes, Delete</button>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="this.closest('.alert').remove()">Cancel</button>
+                </div>
+            `;
+            
+            container.innerHTML = '';
+            container.appendChild(confirmation);
+        }
+
+        function confirmDelete(templateId) {
+            document.getElementById('delete-form-' + templateId).submit();
+        }
+
         function exportCurrentTemplate() {
             const fields = ['title', 'subject', 'template_name', 'header', 'body', 'button_text', 'button_link', 'footer'];
             fields.forEach(field => {
                 document.getElementById('export_' + field).value = document.getElementById(field).value;
             });
             document.getElementById('exportForm').submit();
+            showNotification('Exporting template...', 'info', 2000);
         }
 
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('emailForm');
             htmx.trigger(form, 'keyup');
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('success') === 'saved') {
+                showNotification('Template saved successfully!', 'success');
+            } else if (urlParams.get('success') === 'updated') {
+                showNotification('Template updated successfully!', 'success');
+            } else if (urlParams.get('success') === 'deleted') {
+                showNotification('Template deleted successfully!', 'success');
+            } else if (urlParams.get('success') === 'imported') {
+                showNotification('Template imported successfully!', 'success');
+            } else if (urlParams.get('error')) {
+                showNotification(urlParams.get('error'), 'error');
+            }
         });
     </script>
 </body>

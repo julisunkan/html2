@@ -51,7 +51,7 @@ def preview():
     button_text = request.form.get('button_text', '')
     button_link = request.form.get('button_link', '')
     footer = request.form.get('footer', '')
-    
+
     return render_template(
         f'email_templates/{template_name}.html',
         header=header,
@@ -64,7 +64,7 @@ def preview():
 @app.route('/save', methods=['POST'])
 def save_template():
     validate_csrf_token()
-    
+
     title = request.form.get('title')
     subject = request.form.get('subject')
     header = request.form.get('header')
@@ -73,7 +73,7 @@ def save_template():
     button_link = request.form.get('button_link')
     footer = request.form.get('footer')
     template_name = validate_template_name(request.form.get('template_name'))
-    
+
     template = EmailTemplate(
         title=title,
         subject=subject,
@@ -84,17 +84,17 @@ def save_template():
         footer=footer,
         template_name=template_name
     )
-    
+
     db.session.add(template)
     db.session.commit()
-    
-    return redirect(url_for('index'))
+
+    return redirect(url_for('index', success='saved'))
 
 @app.route('/export/<int:template_id>')
 def export_template(template_id):
     template = EmailTemplate.query.get_or_404(template_id)
     validated_template_name = validate_template_name(template.template_name)
-    
+
     html_content = render_template(
         f'email_templates/{validated_template_name}.html',
         header=template.header,
@@ -103,13 +103,13 @@ def export_template(template_id):
         button_link=template.button_link,
         footer=template.footer
     )
-    
+
     buffer = BytesIO()
     buffer.write(html_content.encode('utf-8'))
     buffer.seek(0)
-    
+
     filename = f"{template.title.replace(' ', '_')}.html"
-    
+
     return send_file(
         buffer,
         as_attachment=True,
@@ -120,7 +120,7 @@ def export_template(template_id):
 @app.route('/export_current', methods=['POST'])
 def export_current():
     validate_csrf_token()
-    
+
     template_name = validate_template_name(request.form.get('template_name', 'template1'))
     title = request.form.get('title', 'email_template')
     header = request.form.get('header', '')
@@ -128,7 +128,7 @@ def export_current():
     button_text = request.form.get('button_text', '')
     button_link = request.form.get('button_link', '')
     footer = request.form.get('footer', '')
-    
+
     html_content = render_template(
         f'email_templates/{template_name}.html',
         header=header,
@@ -137,13 +137,13 @@ def export_current():
         button_link=button_link,
         footer=footer
     )
-    
+
     buffer = BytesIO()
     buffer.write(html_content.encode('utf-8'))
     buffer.seek(0)
-    
+
     filename = f"{title.replace(' ', '_')}.html"
-    
+
     return send_file(
         buffer,
         as_attachment=True,
@@ -154,17 +154,17 @@ def export_current():
 @app.route('/import_html', methods=['POST'])
 def import_html():
     validate_csrf_token()
-    
+
     if 'html_file' not in request.files:
         return redirect(url_for('index'))
-    
+
     file = request.files['html_file']
     if file.filename == '':
         return redirect(url_for('index'))
-    
+
     html_content = file.read().decode('utf-8')
     title = request.form.get('import_title', file.filename.replace('.html', ''))
-    
+
     template = EmailTemplate(
         title=title,
         subject=f"Imported: {title}",
@@ -175,11 +175,11 @@ def import_html():
         footer="",
         template_name="template1"
     )
-    
+
     db.session.add(template)
     db.session.commit()
-    
-    return redirect(url_for('index'))
+
+    return redirect(url_for('index', success='imported'))
 
 @app.route('/view/<int:template_id>')
 def view_template(template_id):
@@ -196,9 +196,9 @@ def edit_template(template_id):
 @app.route('/update/<int:template_id>', methods=['POST'])
 def update_template(template_id):
     validate_csrf_token()
-    
+
     template = EmailTemplate.query.get_or_404(template_id)
-    
+
     template.title = request.form.get('title')
     template.subject = request.form.get('subject')
     template.header = request.form.get('header')
@@ -207,19 +207,19 @@ def update_template(template_id):
     template.button_link = request.form.get('button_link')
     template.footer = request.form.get('footer')
     template.template_name = validate_template_name(request.form.get('template_name'))
-    
+
     db.session.commit()
-    
-    return redirect(url_for('index'))
+
+    return redirect(url_for('index', success='updated'))
 
 @app.route('/delete/<int:template_id>', methods=['POST'])
 def delete_template(template_id):
     validate_csrf_token()
-    
+
     template = EmailTemplate.query.get_or_404(template_id)
     db.session.delete(template)
     db.session.commit()
-    return redirect(url_for('index'))
+    return redirect(url_for('index', success='deleted'))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
