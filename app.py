@@ -9,6 +9,9 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mailcraft.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SESSION_SECRET', 'dev-secret-key-change-in-production')
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 db.init_app(app)
 
@@ -21,6 +24,9 @@ def validate_template_name(template_name):
     if template_name not in ALLOWED_TEMPLATES:
         abort(400, description="Invalid template name")
     return template_name
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def generate_csrf_token():
     if 'csrf_token' not in session:
@@ -37,6 +43,7 @@ app.jinja_env.globals['csrf_token'] = generate_csrf_token
 
 with app.app_context():
     db.create_all()
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 @app.route('/')
 def index():
@@ -220,6 +227,27 @@ def delete_template(template_id):
     db.session.delete(template)
     db.session.commit()
     return redirect(url_for('index', success='deleted'))
+
+@app.route('/upload_image', methods=['POST'])
+def upload_image():
+    validate_csrf_token()
+    
+    if 'image' not in request.files:
+        return redirect(url_for('index', error='No image file provided'))
+    
+    file = request.files['image']
+    
+    if file.filename == '':
+        return redirect(url_for('index', error='No image selected'))
+    
+    if file and allowed_file(file.filename):
+        filename = secrets.token_hex(8) + '_' + file.filename
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        image_url = url_for('static', filename=f'uploads/{filename}', _external=True)
+        return redirect(url_for('index', success='image_uploaded', image_url=image_url))
+    
+    return redirect(url_for('index', error='Invalid file type. Only images allowed.'))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

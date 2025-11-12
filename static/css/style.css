@@ -141,3 +141,12 @@ textarea.form-control {
         max-width: 90%;
     }
 }
+
+#uploaded-images .alert {
+    word-break: break-all;
+}
+
+#uploaded-images input {
+    font-size: 0.875rem;
+    cursor: pointer;
+}

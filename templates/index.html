@@ -104,6 +104,23 @@
 
                         <hr>
 
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">🖼️ Upload Image</h6>
+                            </div>
+                            <div class="card-body">
+                                <form method="POST" action="{{ url_for('upload_image') }}" enctype="multipart/form-data">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <div class="mb-3">
+                                        <input type="file" class="form-control" name="image" accept="image/*" required>
+                                        <small class="text-muted">Supported: PNG, JPG, JPEG, GIF, WebP (Max 16MB)</small>
+                                    </div>
+                                    <button type="submit" class="btn btn-outline-primary w-100">Upload Image</button>
+                                </form>
+                                <div id="uploaded-images" class="mt-3"></div>
+                            </div>
+                        </div>
+
                         <div class="card">
                             <div class="card-header">
                                 <h6 class="mb-0">📤 Import HTML File</h6>
@@ -247,6 +264,18 @@
                 showNotification('Template deleted successfully!', 'success');
             } else if (urlParams.get('success') === 'imported') {
                 showNotification('Template imported successfully!', 'success');
+            } else if (urlParams.get('success') === 'image_uploaded') {
+                const imageUrl = urlParams.get('image_url');
+                showNotification('Image uploaded successfully! URL copied to clipboard.', 'success');
+                if (imageUrl) {
+                    navigator.clipboard.writeText(imageUrl).catch(() => {});
+                    const container = document.getElementById('uploaded-images');
+                    container.innerHTML = `<div class="alert alert-info mt-2">
+                        <strong>Image URL:</strong><br>
+                        <input type="text" class="form-control form-control-sm mt-1" value="${imageUrl}" readonly onclick="this.select()">
+                        <small class="text-muted">Click to select and copy</small>
+                    </div>`;
+                }
             } else if (urlParams.get('error')) {
                 showNotification(urlParams.get('error'), 'error');
             }
