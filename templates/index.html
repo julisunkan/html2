@@ -9,6 +9,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
     <nav class="navbar navbar-dark bg-primary">
@@ -18,6 +19,43 @@
     </nav>
 
     <div id="notification-container" class="container-fluid mt-3"></div>
+
+    <!-- Image Insertion Modal -->
+    <div class="modal fade" id="imageInsertModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Insert Image</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <img id="modal-preview-image" src="" alt="Preview" class="img-fluid mb-3" style="max-height: 200px;">
+                    </div>
+                    <div class="mb-3">
+                        <label for="image-width" class="form-label">Width (px or %)</label>
+                        <input type="text" class="form-control" id="image-width" value="300" placeholder="e.g., 300 or 100%">
+                    </div>
+                    <div class="mb-3">
+                        <label for="image-align" class="form-label">Alignment</label>
+                        <select class="form-select" id="image-align">
+                            <option value="left">Left</option>
+                            <option value="center" selected>Center</option>
+                            <option value="right">Right</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="image-alt" class="form-label">Alt Text (optional)</label>
+                        <input type="text" class="form-control" id="image-alt" placeholder="Description of image">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="insertImageIntoBody()">Insert Image</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="container-fluid mt-4">
         <div class="row">
@@ -64,6 +102,24 @@
                             <div class="mb-3">
                                 <label for="body" class="form-label">Body Content</label>
                                 <textarea class="form-control" id="body" name="body" rows="5" required hx-post="/preview" hx-target="#live-preview" hx-trigger="keyup changed delay:500ms" hx-include="#emailForm">{% if edit_template %}{{ edit_template.body }}{% endif %}</textarea>
+                                <small class="text-muted">💡 Drag images from below to insert them into your email body</small>
+                                
+                                {% if uploaded_images %}
+                                <div class="mt-2 p-2 border rounded" style="background: #f8f9fa;">
+                                    <div class="d-flex gap-2 overflow-auto" style="max-height: 120px;">
+                                        {% for image in uploaded_images %}
+                                        <img src="{{ url_for('static', filename='uploads/' + image) }}" 
+                                             alt="{{ image }}" 
+                                             class="draggable-image" 
+                                             draggable="true"
+                                             data-image-url="{{ url_for('static', filename='uploads/' + image, _external=True) }}"
+                                             style="height: 80px; width: auto; cursor: grab; border: 2px solid transparent; border-radius: 4px; transition: all 0.2s;"
+                                             onmouseover="this.style.borderColor='#007BFF'"
+                                             onmouseout="this.style.borderColor='transparent'">
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
                             </div>
 
                             <div class="mb-3">
@@ -331,9 +387,91 @@
             showNotification('Exporting template...', 'info', 2000);
         }
 
+        let currentImageUrl = '';
+
+        function insertImageIntoBody() {
+            const width = document.getElementById('image-width').value;
+            const align = document.getElementById('image-align').value;
+            const alt = document.getElementById('image-alt').value;
+            
+            const alignStyle = align === 'center' ? 'display: block; margin: 0 auto;' : 
+                              align === 'right' ? 'float: right; margin-left: 10px;' : 
+                              'float: left; margin-right: 10px;';
+            
+            const widthAttr = width.includes('%') ? `width: ${width};` : `width: ${width}px;`;
+            
+            const imgTag = `<img src="${currentImageUrl}" alt="${alt}" style="${alignStyle} ${widthAttr} max-width: 100%; height: auto;">`;
+            
+            const bodyTextarea = document.getElementById('body');
+            const cursorPos = bodyTextarea.selectionStart;
+            const textBefore = bodyTextarea.value.substring(0, cursorPos);
+            const textAfter = bodyTextarea.value.substring(cursorPos);
+            
+            bodyTextarea.value = textBefore + imgTag + textAfter;
+            
+            // Trigger preview update
+            htmx.trigger(bodyTextarea, 'keyup');
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('imageInsertModal'));
+            modal.hide();
+            
+            showNotification('Image inserted successfully!', 'success', 2000);
+        }
+
+        function setupDragAndDrop() {
+            const draggableImages = document.querySelectorAll('.draggable-image');
+            const bodyTextarea = document.getElementById('body');
+            
+            draggableImages.forEach(img => {
+                img.addEventListener('dragstart', function(e) {
+                    currentImageUrl = this.getAttribute('data-image-url');
+                    this.style.cursor = 'grabbing';
+                });
+                
+                img.addEventListener('dragend', function(e) {
+                    this.style.cursor = 'grab';
+                });
+                
+                img.addEventListener('click', function(e) {
+                    currentImageUrl = this.getAttribute('data-image-url');
+                    document.getElementById('modal-preview-image').src = currentImageUrl;
+                    const modal = new bootstrap.Modal(document.getElementById('imageInsertModal'));
+                    modal.show();
+                });
+            });
+            
+            if (bodyTextarea) {
+                bodyTextarea.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    this.style.borderColor = '#007BFF';
+                    this.style.borderWidth = '2px';
+                });
+                
+                bodyTextarea.addEventListener('dragleave', function(e) {
+                    this.style.borderColor = '#ced4da';
+                    this.style.borderWidth = '1.5px';
+                });
+                
+                bodyTextarea.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    this.style.borderColor = '#ced4da';
+                    this.style.borderWidth = '1.5px';
+                    
+                    if (currentImageUrl) {
+                        document.getElementById('modal-preview-image').src = currentImageUrl;
+                        const modal = new bootstrap.Modal(document.getElementById('imageInsertModal'));
+                        modal.show();
+                    }
+                });
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('emailForm');
             htmx.trigger(form, 'keyup');
+            
+            setupDragAndDrop();
             
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('success') === 'saved') {
