@@ -1,4 +1,4 @@
-# MailCraft - HTML Email Creator
+# Professional HTML Email Creator
 
 ## Overview
 
