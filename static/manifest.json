@@ -1,6 +1,6 @@
 {
   "name": "Professional HTML Email Creator",
-  "short_name": "MailCraft",
+  "short_name": "EmailCrafter",
   "description": "Create, preview, and export responsive HTML email templates",
   "start_url": "/",
   "display": "standalone",
