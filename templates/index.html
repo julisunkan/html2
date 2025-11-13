@@ -407,11 +407,29 @@
         }
 
         function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                showNotification('URL copied to clipboard!', 'success', 2000);
-            }).catch(() => {
-                showNotification('Failed to copy URL', 'error', 2000);
-            });
+            // Try the fallback method first (works without permissions)
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                document.body.removeChild(textarea);
+                
+                if (successful) {
+                    showNotification('✓ URL copied to clipboard!', 'success', 2000);
+                } else {
+                    // If execCommand fails, show manual copy instruction
+                    showNotification('Please manually copy the URL from the text field', 'warning', 4000);
+                }
+            } catch (err) {
+                document.body.removeChild(textarea);
+                showNotification('Please manually copy the URL from the text field', 'warning', 4000);
+            }
         }
 
         function exportCurrentTemplate() {
