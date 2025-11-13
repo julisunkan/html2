@@ -196,13 +196,13 @@
                                                         <small class="d-block text-muted mb-1">{{ image }}</small>
                                                         <div class="input-group input-group-sm">
                                                             <input type="text" class="form-control form-control-sm" value="{{ url_for('static', filename='uploads/' + image, _external=True) }}" readonly onclick="this.select(); copyToClipboard(this.value)">
-                                                            <button class="btn btn-outline-secondary btn-sm" type="button" onclick="copyToClipboard('{{ url_for('static', filename='uploads/' + image, _external=True) }}')">📋</button>
+                                                            <button class="btn btn-outline-secondary btn-sm" type="button" data-url="{{ url_for('static', filename='uploads/' + image, _external=True) }}" onclick="copyToClipboard(this.dataset.url)">📋</button>
                                                         </div>
                                                         <small class="text-muted">Click URL to copy • Use in email body: &lt;img src="URL"&gt;</small>
                                                     </div>
                                                     <div class="col-2 text-end">
-                                                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="showImageDeleteConfirmation('{{ image }}')">🗑️</button>
-                                                        <form method="POST" action="{{ url_for('delete_image', filename=image) }}" id="delete-image-form-{{ image }}" style="display: none;">
+                                                        <button type="button" class="btn btn-outline-danger btn-sm" data-form-id="delete-image-form-{{ loop.index }}" data-filename="{{ image }}" onclick="showImageDeleteConfirmation(this.dataset.formId, this.dataset.filename)">🗑️</button>
+                                                        <form method="POST" action="{{ url_for('delete_image', filename=image) }}" id="delete-image-form-{{ loop.index }}" style="display: none;">
                                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                         </form>
                                                     </div>
@@ -237,7 +237,7 @@
                                             <a href="{{ url_for('view_template', template_id=template.id) }}" class="btn btn-outline-primary" target="_blank">View</a>
                                             <a href="{{ url_for('edit_template', template_id=template.id) }}" class="btn btn-outline-secondary">Edit</a>
                                             <a href="{{ url_for('export_template', template_id=template.id) }}" class="btn btn-outline-success">Export</a>
-                                            <button type="button" class="btn btn-outline-danger" onclick="showDeleteConfirmation({{ template.id }}, '{{ template.title }}')">Delete</button>
+                                            <button type="button" class="btn btn-outline-danger" data-template-id="{{ template.id }}" data-template-title="{{ template.title }}" onclick="showDeleteConfirmation(this.dataset.templateId, this.dataset.templateTitle)">Delete</button>
                                             <form method="POST" action="{{ url_for('delete_template', template_id=template.id) }}" id="delete-form-{{ template.id }}" style="display: none;">
                                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                             </form>
@@ -299,10 +299,20 @@
                              type === 'warning' ? 'alert-warning' : 'alert-info';
             
             notification.className = `alert ${alertClass} alert-dismissible fade show`;
-            notification.innerHTML = `
-                <strong>${type === 'success' ? '✓' : type === 'error' ? '✗' : type === 'warning' ? '⚠' : 'ℹ'}</strong> ${message}
-                <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
-            `;
+            
+            const strong = document.createElement('strong');
+            const icon = type === 'success' ? '✓' : type === 'error' ? '✗' : type === 'warning' ? '⚠' : 'ℹ';
+            strong.textContent = icon;
+            notification.appendChild(strong);
+            
+            const messageText = document.createTextNode(' ' + message);
+            notification.appendChild(messageText);
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.type = 'button';
+            closeBtn.className = 'btn-close';
+            closeBtn.onclick = function() { this.parentElement.remove(); };
+            notification.appendChild(closeBtn);
             
             container.appendChild(notification);
             
@@ -317,16 +327,35 @@
         function showDeleteConfirmation(templateId, templateTitle) {
             const container = document.getElementById('notification-container');
             const confirmation = document.createElement('div');
-            
             confirmation.className = 'alert alert-warning alert-dismissible fade show';
-            confirmation.innerHTML = `
-                <strong>⚠ Confirm Deletion</strong><br>
-                Are you sure you want to delete "${templateTitle}"?
-                <div class="mt-2">
-                    <button type="button" class="btn btn-sm btn-danger me-2" onclick="confirmDelete(${templateId})">Yes, Delete</button>
-                    <button type="button" class="btn btn-sm btn-secondary" onclick="this.closest('.alert').remove()">Cancel</button>
-                </div>
-            `;
+            
+            const strong = document.createElement('strong');
+            strong.textContent = '⚠ Confirm Deletion';
+            confirmation.appendChild(strong);
+            
+            confirmation.appendChild(document.createElement('br'));
+            
+            const message = document.createTextNode('Are you sure you want to delete "' + templateTitle + '"?');
+            confirmation.appendChild(message);
+            
+            const buttonDiv = document.createElement('div');
+            buttonDiv.className = 'mt-2';
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'btn btn-sm btn-danger me-2';
+            deleteBtn.textContent = 'Yes, Delete';
+            deleteBtn.onclick = function() { confirmDelete(templateId); };
+            
+            const cancelBtn = document.createElement('button');
+            cancelBtn.type = 'button';
+            cancelBtn.className = 'btn btn-sm btn-secondary';
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.onclick = function() { this.closest('.alert').remove(); };
+            
+            buttonDiv.appendChild(deleteBtn);
+            buttonDiv.appendChild(cancelBtn);
+            confirmation.appendChild(buttonDiv);
             
             container.innerHTML = '';
             container.appendChild(confirmation);
@@ -336,26 +365,45 @@
             document.getElementById('delete-form-' + templateId).submit();
         }
 
-        function showImageDeleteConfirmation(filename) {
+        function showImageDeleteConfirmation(formId, filename) {
             const container = document.getElementById('notification-container');
             const confirmation = document.createElement('div');
-            
             confirmation.className = 'alert alert-warning alert-dismissible fade show';
-            confirmation.innerHTML = `
-                <strong>⚠ Confirm Deletion</strong><br>
-                Are you sure you want to delete "${filename}"?
-                <div class="mt-2">
-                    <button type="button" class="btn btn-sm btn-danger me-2" onclick="confirmImageDelete('${filename}')">Yes, Delete</button>
-                    <button type="button" class="btn btn-sm btn-secondary" onclick="this.closest('.alert').remove()">Cancel</button>
-                </div>
-            `;
+            
+            const strong = document.createElement('strong');
+            strong.textContent = '⚠ Confirm Deletion';
+            confirmation.appendChild(strong);
+            
+            confirmation.appendChild(document.createElement('br'));
+            
+            const message = document.createTextNode('Are you sure you want to delete "' + filename + '"?');
+            confirmation.appendChild(message);
+            
+            const buttonDiv = document.createElement('div');
+            buttonDiv.className = 'mt-2';
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'btn btn-sm btn-danger me-2';
+            deleteBtn.textContent = 'Yes, Delete';
+            deleteBtn.onclick = function() { confirmImageDelete(formId); };
+            
+            const cancelBtn = document.createElement('button');
+            cancelBtn.type = 'button';
+            cancelBtn.className = 'btn btn-sm btn-secondary';
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.onclick = function() { this.closest('.alert').remove(); };
+            
+            buttonDiv.appendChild(deleteBtn);
+            buttonDiv.appendChild(cancelBtn);
+            confirmation.appendChild(buttonDiv);
             
             container.innerHTML = '';
             container.appendChild(confirmation);
         }
 
-        function confirmImageDelete(filename) {
-            document.getElementById('delete-image-form-' + filename).submit();
+        function confirmImageDelete(formId) {
+            document.getElementById(formId).submit();
         }
 
         function copyToClipboard(text) {

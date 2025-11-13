@@ -6,6 +6,7 @@ from io import BytesIO
 import secrets
 import bleach
 from bleach.css_sanitizer import CSSSanitizer
+import re
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mailcraft.db'
@@ -111,6 +112,37 @@ def sanitize_url(url):
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def sanitize_filename(filename):
+    """
+    Sanitize filename to prevent XSS and path traversal attacks.
+    Removes dangerous characters like quotes, backticks, and special characters.
+    """
+    if not filename:
+        return ''
+    
+    # Get the name and extension separately
+    name, ext = os.path.splitext(filename)
+    
+    # Remove or replace dangerous characters
+    # Keep only alphanumeric, dots, hyphens, underscores
+    name = re.sub(r'[^\w\-.]', '_', name)
+    
+    # Remove multiple consecutive underscores or dots
+    name = re.sub(r'[_.]{2,}', '_', name)
+    
+    # Remove leading/trailing underscores and dots
+    name = name.strip('_.')
+    
+    # Ensure we have a name
+    if not name:
+        name = 'file'
+    
+    # Limit length to prevent issues
+    if len(name) > 100:
+        name = name[:100]
+    
+    return name + ext.lower()
 
 def generate_csrf_token():
     if 'csrf_token' not in session:
@@ -328,7 +360,10 @@ def upload_image():
     
     if file and allowed_file(file.filename):
         try:
-            filename = secrets.token_hex(8) + '_' + file.filename
+            # Sanitize the original filename to prevent XSS
+            safe_filename = sanitize_filename(file.filename)
+            # Add random prefix to prevent filename collisions and further security
+            filename = secrets.token_hex(8) + '_' + safe_filename
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
             image_url = url_for('static', filename=f'uploads/{filename}', _external=True)
