@@ -1,7 +1,6 @@
 flask
 flask_sqlalchemy
-flask
-flask_sqlalchemy
-flask
-flask_sqlalchemy
 bleach
+flask
+flask_sqlalchemy
+tinycss2
